@@ -1,14 +1,15 @@
 import os
 import threading
+import asyncio
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-app_web = Flask(__name__)
+web = Flask(__name__)
 
-@app_web.route("/")
+@web.route("/")
 def home():
     return "Bot is running!"
 
@@ -19,6 +20,9 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(update.message.text)
 
 def run_bot():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -26,7 +30,6 @@ def run_bot():
 
     app.run_polling()
 
-threading.Thread(target=run_bot).start()
+threading.Thread(target=run_bot, daemon=True).start()
 
-port = int(os.environ.get("PORT", 10000))
-app_web.run(host="0.0.0.0", port=port)
+web.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
